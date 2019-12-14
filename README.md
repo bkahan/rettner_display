@@ -1,6 +1,6 @@
 # University of Rochester - Rettner Media Lab
 
-# Main Display - Slideshow 
+## Main Display - Slideshow 
 
 The slideshow is run on a Raspberry Pi 3 Model B and updates periodically with current news, events, or other important information. 
 
