@@ -15,6 +15,8 @@ import pygame
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
 import pyowm
 
+from googleDrive import *
+
 
 file_list = []  # a list of all images being shown
 title = "Rettner Media Lab"  # caption of the window...
@@ -169,7 +171,7 @@ def main(startdir="."):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Recursively loads images '
-                    'from a directory, then displays them in a Slidshow.'
+                    'from a directory, then displays them in a Slideshow.'
     )
 
     parser.add_argument(

@@ -1,12 +1,9 @@
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-
 import os
 
 foldertofind = 'Rettner Files'
-
 folderfound = False
-
 filestodownload = []
 
 gAuth = GoogleAuth()
@@ -21,9 +18,6 @@ def authenticateUser():
     else:
         gAuth.Authorize()
     gAuth.SaveCredentialsFile("credentials.txt")
-
-
-drive = GoogleDrive(gAuth)
 
 
 def getFileList():
@@ -44,11 +38,14 @@ def downloadFiles(file_list=None):
     path = './pictures'
     os.chdir(path)
     for f in file_list:
-        # 3. Create & download by id.
-        fname = f['title']
-        print('downloading {}'.format(fname))
+        fileName = f['title']
+        print('downloading {}'.format(fileName))
         f_ = drive.CreateFile({'id': f['id']})
-        f_.GetContentFile(fname)
+        f_.GetContentFile(fileName)
+    os.chdir('..')
+
+
+drive = GoogleDrive(gAuth)
 
 
 def main():
