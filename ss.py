@@ -137,7 +137,7 @@ def main(startdir="."):
             # gets the current time and displays it
             timeText = datetime.datetime.now().strftime("%I:%M%p")
             dateText = datetime.datetime.now().strftime("%B %d, %Y")
-            weatherText = str(int(temperature)) + "°F  " + status
+            weatherText = str(int(temperature)) + "'F  " + status
 
             timeLabel = timeFont.render(timeText, 1, (255, 255, 255))
             dateLabel = dateFont.render(dateText, 1, (255, 255, 255))
