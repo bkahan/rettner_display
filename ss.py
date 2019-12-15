@@ -15,7 +15,6 @@ import pygame
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
 import pyowm
 
-import pydrive as pd
 
 file_list = []  # a list of all images being shown
 title = "Rettner Media Lab"  # caption of the window...
