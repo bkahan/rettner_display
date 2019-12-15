@@ -11,11 +11,11 @@ import stat
 import sys
 import time
 import datetime
-
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
-
 import pyowm
+
+import pydrive as pd
 
 file_list = []  # a list of all images being shown
 title = "Rettner Media Lab"  # caption of the window...
@@ -98,22 +98,19 @@ def main(startdir="."):
         sys.exit(1)
 
     modes = pygame.display.list_modes()
-    print(max(modes))
     pygame.display.set_mode(max(modes))
 
     screen = pygame.display.get_surface()
     screen_width, screen_height = screen.get_size()
+
     pygame.display.set_caption(title)
     pygame.display.set_mode(max(modes), pygame.FULLSCREEN)
-
     pygame.mouse.set_visible(0)
 
     # create font
     timeFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 100)
     dateFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 60)
     weatherFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 60)
-
-    print(str(waittime) + "wait time")
 
     current = 0
     num_files = len(file_list)
@@ -122,12 +119,10 @@ def main(startdir="."):
         try:
             img = pygame.image.load(file_list[current])
             img = img.convert()
-            tempX, tempY = img.get_size()
-            ratio = tempX / tempY
-            tempSize = (screen_width, int(screen_width / ratio))
-            print(str(img.get_size()) + " to " + str(tempSize) + "and ratio: " + str(ratio))
+            screenX = screen_width
+            screenY = screen_height
             # rescale the image to fit the current display
-            img = pygame.transform.scale(img, tempSize)
+            img = pygame.transform.scale(img, (screenX, screenY))
             screen.blit(img, (0, 0))
 
             # gets current weather
@@ -182,7 +177,7 @@ if __name__ == '__main__':
         'path',
         metavar='ImagePath',
         type=str,
-        default='.',
+        default='pictures',
         nargs="?",
         help='Path to a directory that contains images'
     )
@@ -199,11 +194,9 @@ if __name__ == '__main__':
         type=str,
         dest='title',
         action='store',
-        default="pgSlidShow | My Slideshow!",
+        default="Rettner Media Lab",
         help='Set the title for the display window.'
     )
     args = parser.parse_args()
-    # waittime = args.waittime
-
     title = args.title
     main(startdir=args.path)
