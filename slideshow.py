@@ -11,12 +11,19 @@ import stat
 import sys
 import time
 import datetime
+import threading
+from queue import Queue
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
 import pyowm
 
-from googleDrive import *
+import googleDrive as gd
 
+global toDownload, location, tempUnit, folderName
+
+location = 'Rochester,NY,USA'
+tempUnit = 'fahrenheit'
+folderName = 'Rettner Files'
 
 file_list = []  # a list of all images being shown
 title = "Rettner Media Lab"  # caption of the window...
@@ -73,12 +80,15 @@ def timeSince(lastTime, interval):
 
 
 def main(startdir="."):
-    global file_list, title, waittime
+    global file_list, title, waittime, toDownload
+
+    gd.authenticateUser()  # authenticate the user
+    toDownload = gd.getFileList(folderName)
+    gd.downloadFiles(toDownload)
+
     lastSwitch = time.time()
     lastWeather = time.time()
-
-    location = 'Rochester,NY,USA'
-    tempUnit = 'fahrenheit'
+    lastDownload = time.time()
 
     owm = pyowm.OWM('98b2dc257732f2825cf3a14eaff380bd')
     observation = owm.weather_at_place(location)
@@ -105,7 +115,7 @@ def main(startdir="."):
     screen_width, screen_height = screen.get_size()
 
     pygame.display.set_caption(title)
-    pygame.display.set_mode(max(modes), pygame.FULLSCREEN)
+    pygame.display.set_mode(max(modes), pygame.RESIZABLE)
     pygame.mouse.set_visible(0)
 
     # create font
@@ -158,6 +168,13 @@ def main(startdir="."):
 
             input(pygame.event.get())
             time.sleep(1 / 60)
+
+            if timeSince(lastDownload, 30):
+                toDownload = gd.getFileList(folderName)
+                gd.downloadFiles(toDownload)
+                walktree(startdir, addtolist)
+                num_files = len(file_list)
+
         except pygame.error as err:
             print("Failed to display %s: %s" % (file_list[current], err))
             sys.exit(1)

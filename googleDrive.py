@@ -2,8 +2,7 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import os
 
-
-foldertofind = 'Rettner Files'
+# foldertofind = 'Rettner Files'
 folderfound = False
 gAuth = GoogleAuth()
 drive = GoogleDrive(gAuth)
@@ -25,17 +24,20 @@ def authenticateUser():
     gAuth.SaveCredentialsFile("credentials.txt")
 
 
-def getFileList():
-    global folderfound
+def getFileList(searchFor=None):
+    global folderfound, folderID
+    if searchFor is None:
+        print("Nothing to search for. Exiting.")
     file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
     for folder in file_list:
-        if folder['title'] == foldertofind:
+        if searchFor in folder['title']:
+            folderID = folder['id']
             folderfound = True
             break
         else:
-            print('There is no folder called ' + foldertofind + '. Try again.')
+            print('There is no folder called ' + searchFor + '. Try again.')
     if folderfound is True:
-        file_list = drive.ListFile({'q': " '1t0HENJysR4JbM2EtMl-4--NrF4JC0kVK' in parents and trashed=false"}).GetList()
+        file_list = drive.ListFile({'q': " '{}' in parents and trashed=false" .format(folderID)}).GetList()
         return file_list  # returns a list of files to be downloaded
 
 
@@ -48,12 +50,3 @@ def downloadFiles(file_list=None):
         f_ = drive.CreateFile({'id': f['id']})
         f_.GetContentFile(fileName)
     os.chdir('..')  # return to the tld
-
-
-def main():
-    authenticateUser()
-    toDownload = getFileList()
-    downloadFiles(toDownload)
-
-
-main()
