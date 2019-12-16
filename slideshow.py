@@ -137,7 +137,7 @@ def main(start_dir="."):
     weatherFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 60)
 
     current = 0
-    num_files = len(file_list)  # need to update num_files -> update file_list 
+    num_files = len(file_list)  # need to update num_files -> update file_list
 
     while True:
         try:
