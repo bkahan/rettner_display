@@ -4,13 +4,14 @@ original code: https://github.com/andrewdelph/python-slideshow-with-time-and-wea
 updated for rettner media lab, author: ben kahan 2019
 
 """
-from __future__ import division
 import argparse
 import os
 import stat
 import sys
 import time
 import datetime
+import PIL
+from PIL import Image
 import threading
 from queue import Queue
 import pygame
@@ -19,15 +20,15 @@ import pyowm
 
 import googleDrive as gd
 
-global toDownload, location, tempUnit, folderName
-
 location = 'Rochester,NY,USA'
 tempUnit = 'fahrenheit'
 folderName = 'Rettner Files'
+owm_api_key = '98b2dc257732f2825cf3a14eaff380bd'
+
 
 file_list = []  # a list of all images being shown
 title = "Rettner Media Lab"  # caption of the window...
-waittime = 5  # default time to wait between images (in seconds)
+wait_time = 5  # default time to wait between images (in seconds)
 
 
 def walktree(top, callback):
@@ -53,7 +54,6 @@ def addtolist(file, extensions=None):
     """Add a file to a global list of image files."""
     if extensions is None:
         extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp']
-    global file_list  # ugh
     filename, ext = os.path.splitext(file)
     e = ext.lower()
     # Only add common image types to the list.
@@ -79,22 +79,33 @@ def timeSince(lastTime, interval):
         return False
 
 
-def main(startdir="."):
-    global file_list, title, waittime, toDownload
+def cropImage(image_list, width, height):
+    for image in image_list:
+        img = Image.open(image)
+        img_width, img_height = img.size
+        left = (img_width - width) / 2
+        top = (img_height - height) / 2
+        right = (img_width + width) / 2
+        bottom = (img_height + height) / 2
+        # Crop the center of the image
+        img = img.crop((left, top, right, bottom))
+        img.save(image)
 
-    gd.authenticateUser()  # authenticate the user
-    toDownload = gd.getFileList(folderName)
-    gd.downloadFiles(toDownload)
+
+def main(start_dir="."):
+    # gd.authenticateUser()  # authenticate the user
+    # toDownload = gd.getFileList(folderName)
+    # gd.downloadFiles(toDownload)
 
     lastSwitch = time.time()
     lastWeather = time.time()
-    lastDownload = time.time()
 
-    owm = pyowm.OWM('98b2dc257732f2825cf3a14eaff380bd')
+    owm = pyowm.OWM(owm_api_key)
     observation = owm.weather_at_place(location)
     w = observation.get_weather()
     temperature = (w.get_temperature(tempUnit))['temp']
     status = w.get_status()
+
     pygame.init()
 
     # Test for image support
@@ -103,7 +114,7 @@ def main(startdir="."):
         print("It's likely this isn't going to work.")
         sys.exit(1)
 
-    walktree(startdir, addtolist)  # this may take a while...
+    walktree(start_dir, addtolist)
     if len(file_list) == 0:
         print("Sorry. No images found. Exiting.")
         sys.exit(1)
@@ -113,6 +124,8 @@ def main(startdir="."):
 
     screen = pygame.display.get_surface()
     screen_width, screen_height = screen.get_size()
+
+    cropImage(file_list, screen_width, screen_height)
 
     pygame.display.set_caption(title)
     pygame.display.set_mode(max(modes), pygame.RESIZABLE)
@@ -124,16 +137,11 @@ def main(startdir="."):
     weatherFont = pygame.font.Font("indulta/Indulta-SemiSerif-boldFFP.otf", 60)
 
     current = 0
-    num_files = len(file_list)
+    num_files = len(file_list)  # need to update num_files -> update file_list 
 
     while True:
         try:
             img = pygame.image.load(file_list[current])
-            img = img.convert()
-            screenX = screen_width
-            screenY = screen_height
-            # rescale the image to fit the current display
-            img = pygame.transform.scale(img, (screenX, screenY))
             screen.blit(img, (0, 0))
 
             # gets current weather
@@ -169,19 +177,13 @@ def main(startdir="."):
             input(pygame.event.get())
             time.sleep(1 / 60)
 
-            if timeSince(lastDownload, 30):
-                toDownload = gd.getFileList(folderName)
-                gd.downloadFiles(toDownload)
-                walktree(startdir, addtolist)
-                num_files = len(file_list)
-
         except pygame.error as err:
             print("Failed to display %s: %s" % (file_list[current], err))
             sys.exit(1)
 
         # When we get to the end, re-start at the beginning
-        if timeSince(lastSwitch, waittime):
-            current = (current + 1) % num_files;
+        if timeSince(lastSwitch, wait_time):
+            current = (current + 1) % num_files
             lastSwitch = time.time()
 
 
@@ -217,4 +219,4 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     title = args.title
-    main(startdir=args.path)
+    main(start_dir=args.path)
