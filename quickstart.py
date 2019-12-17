@@ -5,13 +5,19 @@ import os
 import stat
 
 gAuth = GoogleAuth()
-gAuth.LocalWebserverAuth()
+
+gAuth.LoadCredentialsFile("currentCreds.txt")
+
+if gAuth.credentials is None: # check to see if there are stored credentials
+    gAuth.LocalWebserverAuth() # load the web verification if not 
+elif gAuth.access_token_expired:
+    gAuth.Refresh()
+else:
+    gAuth.Authorize()
+    
+gAuth.SaveCredentialsFile("currentCreds.txt")
 
 drive = GoogleDrive(gAuth)
 
-file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
-for file1 in file_list:
-    print('title: %s, id: %s' % (file1['title'], file1['id']))
 
-file = 'client_secrets.json'
-gAuth.LoadClientConfigFile(file)
+
