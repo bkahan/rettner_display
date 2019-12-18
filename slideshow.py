@@ -10,21 +10,19 @@ import stat
 import sys
 import time
 import datetime
-import PIL
 from PIL import Image
-import threading
-from queue import Queue
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
 import pyowm
-
 import googleDrive as gd
+
+from pyowm.exceptions.api_call_error import APIInvalidSSLCertificateError
 
 location = 'Rochester,NY,USA'
 tempUnit = 'fahrenheit'
 folderName = 'Rettner Files'
 owm_api_key = '98b2dc257732f2825cf3a14eaff380bd'
-
+weather_no_response = False
 
 file_list = []  # a list of all images being shown
 title = "Rettner Media Lab"  # caption of the window...
@@ -97,14 +95,19 @@ def main(start_dir="."):
     # toDownload = gd.getFileList(folderName)
     # gd.downloadFiles(toDownload)
 
+    global weather_no_response
     lastSwitch = time.time()
     lastWeather = time.time()
 
     owm = pyowm.OWM(owm_api_key)
-    observation = owm.weather_at_place(location)
-    w = observation.get_weather()
-    temperature = (w.get_temperature(tempUnit))['temp']
-    status = w.get_status()
+
+    try:
+        observation = owm.weather_at_place(location)
+        w = observation.get_weather()
+        temperature = (w.get_temperature(tempUnit))['temp']
+        status = w.get_status()
+    except APIInvalidSSLCertificateError:
+        weather_no_response = True
 
     pygame.init()
 
@@ -144,24 +147,26 @@ def main(start_dir="."):
             img = pygame.image.load(file_list[current])
             screen.blit(img, (0, 0))
 
-            # gets current weather
-            if timeSince(lastWeather, 30):
-                observation = owm.weather_at_place(location)
-                w = observation.get_weather()
-                temperature = (w.get_temperature(tempUnit))['temp']
-                status = w.get_status()
-                print(status)
-                lastWeather = time.time()
-                print("updating weather")
+            if weather_no_response is False:
+                weatherText = "Weather Unavailable"
+                weatherLabel = weatherFont.render(weatherText, 1, (255, 255, 255))
+            else:
+                if timeSince(lastWeather, 30):
+                    # gets current weather
+                    observation = owm.weather_at_place(location)
+                    w = observation.get_weather()
+                    temperature = (w.get_temperature(tempUnit))['temp']
+                    status = w.get_status()
+                    lastWeather = time.time()
+                    weatherText = str(int(temperature)) + "'F  " + status
+                    weatherLabel = weatherFont.render(weatherText, 1, (255, 255, 255))
 
             # gets the current time and displays it
             timeText = datetime.datetime.now().strftime("%I:%M%p")
             dateText = datetime.datetime.now().strftime("%B %d, %Y")
-            weatherText = str(int(temperature)) + "'F  " + status
 
             timeLabel = timeFont.render(timeText, 1, (255, 255, 255))
             dateLabel = dateFont.render(dateText, 1, (255, 255, 255))
-            weatherLabel = weatherFont.render(weatherText, 1, (255, 255, 255))
 
             timeWidth, timeHeight = timeLabel.get_size()
             dateWidth, dateHeight = dateLabel.get_size()
