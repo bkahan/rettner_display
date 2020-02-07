@@ -14,6 +14,7 @@ from PIL import Image
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
 import pyowm
+
 import googleDrive as gd
 
 from pyowm.exceptions.api_call_error import APIInvalidSSLCertificateError
